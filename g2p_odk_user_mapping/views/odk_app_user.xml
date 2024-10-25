@@ -32,10 +32,11 @@
             <field name="context">{}</field>
         </record>
         <menuitem
-            id="odk_app_users"
-            name="ODK App Users"
-            parent="g2p_odk_importer.odk_menu_root"
-            sequence="10"
-            action="action_odk_app_users"/>
-        
+        id="odk_app_users"
+        name="ODK App Users"
+        parent="g2p_odk_importer.odk_menu_root"
+        sequence="10"
+        action="action_odk_app_users"
+    />
+
 </odoo>

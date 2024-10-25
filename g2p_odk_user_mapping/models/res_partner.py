@@ -1,9 +1,13 @@
-import requests
 import json
-from odoo import _, api, fields, models
+import logging
+
+import requests
+
+from odoo import api, fields, models
 from odoo.exceptions import UserError, ValidationError
 
 _logger = logging.getLogger(__name__)
+
 
 class ResPartner(models.Model):
     _inherit = "res.partner"
@@ -24,6 +28,8 @@ class ResPartner(models.Model):
             self._login(base_url, username, password)
             if self.session:
                 app_users = self._fetch_app_users(base_url, project_id)
+                # Log the fetched app users for debugging
+                _logger.info("Fetched ODK APP USERS: %s", app_users)
                 return {
                     "domain": {
                         "odk_app_user": [
@@ -54,40 +60,45 @@ class ResPartner(models.Model):
             "Content-Type": "application/json",
         }
         response = requests.get(url, headers=headers, timeout=10)
-        
+
         if response.status_code == 200:
             app_users_data = response.json()
 
             # Get current ODK users in Odoo for the specific project
-            existing_odk_users = self.env["odk.app.user"].search([('project_id', '=', project_id)])
+            existing_odk_users = self.env["odk.app.user"].search([("project_id", "=", project_id)])
 
             # Create a set of ODK user IDs from the fetched data
             fetched_odk_user_ids = {user["id"] for user in app_users_data}
 
             for user in app_users_data:
-                odk_user = self.env["odk.app.user"].search([
-                    ("odk_user_id", "=", user["id"]), 
-                    ('project_id', '=', project_id),
-                ], limit=1)
+                odk_user = self.env["odk.app.user"].search(
+                    [
+                        ("odk_user_id", "=", user["id"]),
+                        ("project_id", "=", project_id),
+                    ],
+                    limit=1,
+                )
 
                 if odk_user:
-                    odk_user.write({
-                        "name": user["displayName"],
-                        "active": True, 
-                    })
+                    odk_user.write(
+                        {
+                            "name": user["displayName"],
+                            "active": True,
+                        }
+                    )
                 else:
-                    self.env["odk.app.user"].create({
-                        "name": user["displayName"],
-                        "odk_user_id": user["id"],
-                        "project_id": project_id,  
-                        "active": True, 
-                    })
+                    self.env["odk.app.user"].create(
+                        {
+                            "name": user["displayName"],
+                            "odk_user_id": user["id"],
+                            "project_id": project_id,
+                            "active": True,
+                        }
+                    )
 
             for odk_user in existing_odk_users:
                 if odk_user.odk_user_id not in fetched_odk_user_ids:
-                    odk_user.write({
-                        "active": False 
-                    })
+                    odk_user.write({"active": False})
 
             return app_users_data
 
