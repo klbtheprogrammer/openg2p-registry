@@ -3,7 +3,7 @@ import logging
 
 import requests
 
-from odoo import api, fields, models
+from odoo import _, api, fields, models
 from odoo.exceptions import UserError, ValidationError
 
 _logger = logging.getLogger(__name__)
@@ -50,7 +50,7 @@ class ResPartner(models.Model):
         if response.status_code == 200:
             self.session = response.json().get("token")
         else:
-            raise ValidationError("Login failed. Check your ODK credentials.")
+            raise ValidationError(_("Login failed. Check your ODK credentials."))
 
     def _fetch_app_users(self, base_url, project_id):
         """Fetch app users from ODK and update odk.app.user records specific to a project."""
@@ -103,4 +103,4 @@ class ResPartner(models.Model):
             return app_users_data
 
         else:
-            raise UserError("Failed to fetch app users from ODK")
+            raise UserError(_("Failed to fetch app users"))
